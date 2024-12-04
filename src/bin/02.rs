@@ -9,6 +9,7 @@ fn main() {
     let text: String =
         std::fs::read_to_string("data/02.txt").expect("Couldn't read file at hard-coded path!");
     println!("Part 1:\n{}", part_1(&text));
+    println!("Part 2:\n{}", part_2(&text));
 }
 
 fn parse_levels(line: &str) -> IResult<&str, Vec<i64>> {
@@ -36,15 +37,32 @@ fn part_1(text: &str) -> usize {
         .count()
 }
 
-// fn part_2(text: &str) -> usize {
-//     let levels: Vec<Vec<i64>> = text
-//         .lines()
-//         .map(|l| {
-//             let (_, level_ints) = parse_levels(l).unwrap();
-//             level_ints
-//         })
-//         .collect();
-// }
+fn part_2(text: &str) -> usize {
+    let levels: Vec<Vec<i64>> = text
+        .lines()
+        .map(|l| {
+            let (_, level_ints) = parse_levels(l).unwrap();
+            level_ints
+        })
+        .collect();
+    let easy_count: usize = levels.iter().filter(|l| part_1_criterion(l)).count();
+    let one_off_count: usize = levels
+        .iter()
+        .filter(|l| !part_1_criterion(l))
+        .filter(|l| {
+            l.iter().enumerate().any(|(n, _)| {
+                part_1_criterion(
+                    &l.iter()
+                        .enumerate()
+                        .filter(|(m, _)| n != *m)
+                        .map(|(_, a)| *a)
+                        .collect::<Vec<i64>>(),
+                )
+            })
+        })
+        .count();
+    easy_count + one_off_count
+}
 
 #[cfg(test)]
 mod test {
@@ -78,7 +96,12 @@ mod test {
     }
 
     #[test]
-    fn part_1_test() {
+    fn day_2_part_1_test() {
         assert_eq!(part_1(INPUT), 2);
+    }
+
+    #[test]
+    fn day_2_part_2_test() {
+        assert_eq!(part_2(INPUT), 4);
     }
 }
