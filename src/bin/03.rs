@@ -1,17 +1,17 @@
 use nom::branch::alt;
-// use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::character::complete::{anychar, digit1};
+use nom::combinator::map;
 use nom::combinator::{map_res, rest};
 use nom::multi::{many0, many_till};
 use nom::sequence::{delimited, separated_pair, terminated};
-use nom::{IResult, Parser};
+use nom::IResult;
 
 fn main() {
     let text: String =
         std::fs::read_to_string("data/03.txt").expect("Couldn't read file at hard-coded path!");
     println!("Part 1:\n{}", part_1(&text));
-    // println!("Part 2:\n{}", part_2(&text));
+    println!("Part 2:\n{}", part_2(&text));
 }
 
 fn mul_parser(line: &str) -> IResult<&str, (u64, u64)> {
@@ -42,27 +42,52 @@ fn part_1(text: &str) -> u64 {
         })
         .sum()
 }
+
+#[derive(Debug, PartialEq)]
 enum Expression {
-    Mul((u64, u64)),
+    Mul(u64, u64),
     Cond(bool),
 }
 
-fn mul_to_expression_parser(text: &str) -> IResult<&str, Expression> {
-    map_res(mul_parser, Expression::Mul)(text)
+fn cond_parser(text: &str) -> IResult<&str, Expression> {
+    map(alt((tag(r"don't()"), tag(r"do()"))), |s: &str| {
+        Expression::Cond(matches!(s, r"do()"))
+    })(text)
 }
-fn mul_or_cond_parser(text: &str) -> IResult<&str, Expression> {
-    alt(
-        map_res(alt((tag("don't"), tag("do"))), |s| {
-            Expression::Cond(s == "do")
-        }),
-    )(text)
+
+fn mul_expression_parser(text: &str) -> IResult<&str, Expression> {
+    map(mul_parser, |(a, b)| Expression::Mul(a, b))(text)
+}
+
+fn parse_many_expressions(text: &str) -> IResult<&str, Vec<Expression>> {
+    let expression_parser = alt((cond_parser, mul_expression_parser));
+    let remove_lead_till_expression = map(
+        many_till(anychar, expression_parser),
+        |(_chars, expression)| expression,
+    );
+    terminated(many0(remove_lead_till_expression), rest)(text)
+}
+
+fn part_2(text: &str) -> u64 {
+    let (_rest, v) = parse_many_expressions(text).unwrap();
+    v.iter()
+        .fold((true, 0), |(b, e): (bool, u64), item: &Expression| match item {
+            Expression::Cond(t) => (*t, e),
+            Expression::Mul(x, y) => {
+                if b {
+                    (b, e + x * y)
+                } else {
+                    (b, e)
+                }
+            }
+        }).1
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     const INPUT: &str = "\
-xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
+xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))";
 
     #[test]
     fn get_tuples() {
@@ -88,5 +113,24 @@ xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))";
     #[test]
     fn day_3_part_1_test() {
         assert_eq!(part_1(INPUT), 161);
+    }
+
+    #[test]
+    fn day_3_test_do_parser() {
+        assert_eq!(cond_parser(r"do()"), Ok(("", Expression::Cond(true))));
+        assert_eq!(cond_parser(r"don't()"), Ok(("", Expression::Cond(false))));
+    }
+
+    #[test]
+    fn day_3_mul_expression_parser() {
+        assert_eq!(
+            mul_expression_parser("mul(321,302)"),
+            Ok(("", Expression::Mul(321, 302)))
+        );
+    }
+
+    #[test]
+    fn day_3_part_2() {
+        assert_eq!(part_2(INPUT), 48);
     }
 }
