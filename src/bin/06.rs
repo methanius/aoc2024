@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use rayon::prelude::*;
+
 fn main() {
     let text: String =
         std::fs::read_to_string("data/06.txt").expect("Couldn't read file at hard-coded path!");
@@ -164,6 +166,7 @@ fn part_2(text: &str) -> usize {
     let (guard, obstacles, max_pos) = parser_for_part_1(text);
     text.lines()
         .enumerate()
+        .par_bridge()
         .map(|(n, l)| {
             l.chars()
                 .enumerate()
