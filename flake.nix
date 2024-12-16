@@ -40,10 +40,11 @@
           rustToolchain
           openssl
           pkg-config
-          cargo-deny
-          cargo-edit
-          cargo-watch
+          # cargo-deny
+          # cargo-edit
+          # cargo-watch
           rust-analyzer
+          pre-commit
         ];
 
         shellHook = ''
@@ -52,6 +53,8 @@
           export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 
           export PATH=$PATH:~/.cargo/bin
+
+          pre-commit install --install-hooks --overwrite
         '';
       };
     });
