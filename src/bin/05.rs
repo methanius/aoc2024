@@ -214,8 +214,14 @@ mod test {
     fn day_5_sort_test() {
         let rules = extract_rules(separate_rule_block_and_update_block(INPUT).0);
         assert_eq!(sort_vec(&[61, 13, 29], &rules), vec![61, 29, 13]);
-        assert_eq!(sort_vec(&[75, 97, 47, 61, 54], &rules), vec![97, 75, 47, 61, 54]);
-        assert_eq!(sort_vec(&[97,13,75,29,47], &rules), vec![97,75,47,29,13]);
+        assert_eq!(
+            sort_vec(&[75, 97, 47, 61, 54], &rules),
+            vec![97, 75, 47, 61, 54]
+        );
+        assert_eq!(
+            sort_vec(&[97, 13, 75, 29, 47], &rules),
+            vec![97, 75, 47, 29, 13]
+        );
     }
 
     #[test]

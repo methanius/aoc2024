@@ -71,16 +71,20 @@ fn parse_many_expressions(text: &str) -> IResult<&str, Vec<Expression>> {
 fn part_2(text: &str) -> u64 {
     let (_rest, v) = parse_many_expressions(text).unwrap();
     v.iter()
-        .fold((true, 0), |(b, e): (bool, u64), item: &Expression| match item {
-            Expression::Cond(t) => (*t, e),
-            Expression::Mul(x, y) => {
-                if b {
-                    (b, e + x * y)
-                } else {
-                    (b, e)
+        .fold(
+            (true, 0),
+            |(b, e): (bool, u64), item: &Expression| match item {
+                Expression::Cond(t) => (*t, e),
+                Expression::Mul(x, y) => {
+                    if b {
+                        (b, e + x * y)
+                    } else {
+                        (b, e)
+                    }
                 }
-            }
-        }).1
+            },
+        )
+        .1
 }
 
 #[cfg(test)]
