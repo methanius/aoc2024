@@ -4,7 +4,7 @@ fn main() {
     let text: String =
         std::fs::read_to_string("data/10.txt").expect("Couldn't read file at hard-coded path!");
     println!("Part 1:\n{}", part_1(&text));
-    // println!("Part 2:\n{}", part_2(&text));
+    println!("Part 2:\n{}", part_2(&text));
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -76,7 +76,7 @@ fn parse_grid(value: &str) -> Grid {
     }
 }
 
-fn walk_to_trail_end<'a>(grid: &'a Grid, start: &'a Position) -> HashSet<Position> {
+fn walk_to_trail_ends<'a>(grid: &'a Grid, start: &'a Position) -> Vec<Position> {
     let mut current_iteration_positions: Vec<Position> = Vec::from([*start]);
     for target_at_step in 1..=9 {
         let mut next_iteration_positions = Vec::new();
@@ -89,9 +89,7 @@ fn walk_to_trail_end<'a>(grid: &'a Grid, start: &'a Position) -> HashSet<Positio
         }
         current_iteration_positions = next_iteration_positions;
     }
-    let mut res = HashSet::new();
-    res.extend(current_iteration_positions);
-    res
+    current_iteration_positions
 }
 
 fn part_1(input: &str) -> u64 {
@@ -101,14 +99,25 @@ fn part_1(input: &str) -> u64 {
         .fold(
             HashMap::new(),
             |mut acc: HashMap<Position, HashSet<Position>>, (pos, _height): (Position, &u64)| {
-                acc.entry(pos)
-                    .or_insert_with(|| walk_to_trail_end(&grid, &pos));
+                acc.entry(pos).or_insert_with(|| {
+                    let mut pos_set = HashSet::new();
+                    pos_set.extend(walk_to_trail_ends(&grid, &pos));
+                    pos_set
+                });
                 acc
             },
         )
         .values()
         .map(|heads: &HashSet<Position>| heads.len() as u64)
         .sum()
+}
+
+fn part_2(input: &str) -> u64 {
+    let grid = parse_grid(input);
+    grid.to_indexed_iterator()
+        .filter(|(_pos, height)| **height == 0)
+        .flat_map(|(pos, _height)| walk_to_trail_ends(&grid, &pos))
+        .count() as u64
 }
 
 #[cfg(test)]
@@ -146,15 +155,20 @@ mod test {
     #[test]
     fn day_10_test_walk_to_trail_end() {
         let grid = parse_grid(INPUT);
-        assert_eq!(walk_to_trail_end(&grid, &Position::new(0, 2)).len(), 5);
-        assert_eq!(walk_to_trail_end(&grid, &Position::new(0, 4)).len(), 6);
-        assert_eq!(walk_to_trail_end(&grid, &Position::new(2, 4)).len(), 5);
-        assert_eq!(walk_to_trail_end(&grid, &Position::new(4, 6)).len(), 3);
-        assert_eq!(walk_to_trail_end(&grid, &Position::new(5, 2)).len(), 1);
+        assert_eq!(walk_to_trail_ends(&grid, &Position::new(0, 2)).len(), 5);
+        assert_eq!(walk_to_trail_ends(&grid, &Position::new(0, 4)).len(), 6);
+        assert_eq!(walk_to_trail_ends(&grid, &Position::new(2, 4)).len(), 5);
+        assert_eq!(walk_to_trail_ends(&grid, &Position::new(4, 6)).len(), 3);
+        assert_eq!(walk_to_trail_ends(&grid, &Position::new(5, 2)).len(), 1);
     }
 
     #[test]
     fn day_10_test_part_1() {
         assert_eq!(part_1(INPUT), 36);
+    }
+
+    #[test]
+    fn day_10_part_2() {
+        assert_eq!(part_2(INPUT), 81);
     }
 }
