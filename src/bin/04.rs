@@ -74,8 +74,8 @@ impl<'a> Puzzle<'a> {
         let mut up_right_diags = acc.clone();
         let mut down_right_diags = acc;
         let lines = self.lines();
-        for nd in 0..=n_one_direction_diagonals {
-            let coord_range = 0..nd;
+        for ndiag in 0..=n_one_direction_diagonals {
+            let coord_range = 0..ndiag;
             up_right_diags.push({
                 let mut temp_up_right = String::new();
                 for (r, c) in zip(coord_range.clone().rev(), coord_range.clone()) {
