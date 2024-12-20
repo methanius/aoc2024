@@ -1,3 +1,5 @@
+use aoc2024::grid::Grid;
+use aoc2024::position::Position;
 use std::collections::{HashMap, HashSet};
 
 fn main() {
@@ -7,76 +9,7 @@ fn main() {
     println!("Part 2:\n{}", part_2(&text));
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-struct Position {
-    row: u64,
-    col: u64,
-}
-
-impl Position {
-    const fn new(row: u64, col: u64) -> Self {
-        Self { row, col }
-    }
-
-    fn direct_neighbours(&self) -> Vec<Self> {
-        let min_row = if self.row == 0 { 0 } else { self.row - 1 };
-        let min_col = if self.col == 0 { 0 } else { self.col - 1 };
-        let mut res: Vec<Self> = Vec::new();
-        for row in min_row..=self.row + 1 {
-            res.push(Self::new(row, self.col));
-        }
-        for col in min_col..=self.col + 1 {
-            res.push(Self::new(self.row, col));
-        }
-        res
-    }
-}
-
-#[derive(Debug, PartialEq)]
-struct Grid {
-    data: Vec<Vec<u64>>,
-}
-
-impl Grid {
-    fn get(&self, position: &Position) -> Option<&u64> {
-        self.data
-            .get(usize::try_from(position.row).expect("The Advent of Code grid is not that big!"))
-            .map(|c| {
-                c.get(
-                    usize::try_from(position.col).expect("The AoC puzzle grid is not that large!"),
-                )
-            })?
-    }
-
-    fn to_indexed_iterator(&self) -> impl Iterator<Item = (Position, &u64)> + use<'_> {
-        self.data.iter().enumerate().flat_map(|(row, row_vector)| {
-            row_vector
-                .iter()
-                .enumerate()
-                .map(move |(col, digit)| (Position::new(row as u64, col as u64), digit))
-        })
-    }
-}
-
-fn parse_grid(value: &str) -> Grid {
-    Grid {
-        data: value
-            .lines()
-            .map(|l| {
-                l.chars()
-                    .map(|c| {
-                        u64::from(
-                            c.to_digit(10)
-                                .expect("Hardcoded input should all be integers"),
-                        )
-                    })
-                    .collect()
-            })
-            .collect(),
-    }
-}
-
-fn walk_to_trail_ends<'a>(grid: &'a Grid, start: &'a Position) -> Vec<Position> {
+fn walk_to_trail_ends<'a>(grid: &'a Grid<u64>, start: &'a Position) -> Vec<Position> {
     let mut current_iteration_positions: Vec<Position> = Vec::from([*start]);
     for target_at_step in 1..=9 {
         let mut next_iteration_positions = Vec::new();
@@ -93,12 +26,14 @@ fn walk_to_trail_ends<'a>(grid: &'a Grid, start: &'a Position) -> Vec<Position> 
 }
 
 fn part_1(input: &str) -> u64 {
-    let grid = parse_grid(input);
+    let grid = Grid::parse_grid(input, |c: char| {
+        u64::from(c.to_digit(10).expect("AOC hardcoded pattern"))
+    });
     grid.to_indexed_iterator()
         .filter(|(_pos, height)| **height == 0)
         .fold(
             HashMap::new(),
-            |mut acc: HashMap<Position, HashSet<Position>>, (pos, _height): (Position, &u64)| {
+            |mut acc: HashMap<Position, HashSet<Position>>, (pos, _height)| {
                 acc.entry(pos).or_insert_with(|| {
                     let mut pos_set = HashSet::new();
                     pos_set.extend(walk_to_trail_ends(&grid, &pos));
@@ -113,7 +48,9 @@ fn part_1(input: &str) -> u64 {
 }
 
 fn part_2(input: &str) -> u64 {
-    let grid = parse_grid(input);
+    let grid = Grid::parse_grid(input, |c: char| {
+        u64::from(c.to_digit(10).expect("Hardcoded aoc pattern"))
+    });
     grid.to_indexed_iterator()
         .filter(|(_pos, height)| **height == 0)
         .flat_map(|(pos, _height)| walk_to_trail_ends(&grid, &pos))
@@ -136,7 +73,7 @@ mod test {
     #[test]
     fn day_10_test_grid_parser() {
         assert_eq!(
-            parse_grid(INPUT),
+            Grid::parse_grid(INPUT, |c| c.to_digit(10).expect("Hardcoded test")),
             Grid {
                 data: vec![
                     vec![8, 9, 0, 1, 0, 1, 2, 3,],
@@ -154,8 +91,8 @@ mod test {
 
     #[test]
     fn day_10_test_walk_to_trail_end() {
-        let grid = parse_grid(INPUT);
-        let unique_start_ends = |grid: &Grid, position: &Position| {
+        let grid = Grid::parse_grid(INPUT, |c: char| u64::from(c.to_digit(10).expect("Test")));
+        let unique_start_ends = |grid: &Grid<u64>, position: &Position| {
             let mut ends = HashSet::new();
             ends.extend(walk_to_trail_ends(grid, position));
             ends
