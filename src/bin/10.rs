@@ -155,11 +155,16 @@ mod test {
     #[test]
     fn day_10_test_walk_to_trail_end() {
         let grid = parse_grid(INPUT);
-        assert_eq!(walk_to_trail_ends(&grid, &Position::new(0, 2)).len(), 5);
-        assert_eq!(walk_to_trail_ends(&grid, &Position::new(0, 4)).len(), 6);
-        assert_eq!(walk_to_trail_ends(&grid, &Position::new(2, 4)).len(), 5);
-        assert_eq!(walk_to_trail_ends(&grid, &Position::new(4, 6)).len(), 3);
-        assert_eq!(walk_to_trail_ends(&grid, &Position::new(5, 2)).len(), 1);
+        let unique_start_ends = |grid: &Grid, position: &Position| {
+            let mut ends = HashSet::new();
+            ends.extend(walk_to_trail_ends(grid, position));
+            ends
+        };
+        assert_eq!(unique_start_ends(&grid, &Position::new(0, 2)).len(), 5);
+        assert_eq!(unique_start_ends(&grid, &Position::new(0, 4)).len(), 6);
+        assert_eq!(unique_start_ends(&grid, &Position::new(2, 4)).len(), 5);
+        assert_eq!(unique_start_ends(&grid, &Position::new(4, 6)).len(), 3);
+        assert_eq!(unique_start_ends(&grid, &Position::new(5, 2)).len(), 1);
     }
 
     #[test]
