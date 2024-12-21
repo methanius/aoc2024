@@ -6,6 +6,11 @@ pub struct Grid<T> {
 
 impl<T: Eq> Grid<T> {
     #[must_use]
+    pub const fn new(data: Vec<Vec<T>>) -> Self {
+        Self { data }
+    }
+
+    #[must_use]
     #[allow(clippy::missing_panics_doc)]
     pub fn get(&self, position: &Position) -> Option<&T> {
         self.data
@@ -35,5 +40,13 @@ impl<T: Eq> Grid<T> {
                 .map(|l| l.chars().map(&str_caster).collect())
                 .collect(),
         }
+    }
+
+    #[must_use]
+    pub fn get_direct_position_value_neighbours(&self, pos: &Position) -> Vec<(Position, &T)> {
+        pos.direct_neighbours()
+            .into_iter()
+            .filter_map(|pos| self.get(&pos).map(|value| (pos, value)))
+            .collect()
     }
 }
