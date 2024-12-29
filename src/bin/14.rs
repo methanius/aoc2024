@@ -15,7 +15,7 @@ fn main() {
         std::fs::read_to_string("data/14.txt").expect("Couldn't read file at hard-coded path!");
     println!("Part 1:\n{}", part_1(&text));
     // println!("Part 2:\n{}", part_2(&text));
-    part_2(&text)
+    part_2(&text);
 }
 
 #[derive(Debug)]
